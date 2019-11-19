@@ -65,9 +65,26 @@ ggplot(regression, aes(x = female, y = dvote))+
   geom_jitter()+
   geom_smooth(method = "lm")
 
+# Using glm (logistic) instead of linear regression 
+# Intercept is -0.4041, female is 0.4222
 
+glm_obj <- glm(dvote ~ female, data = regression, family = "binomial")
 
+glm_obj
 
+# We want to predict someone's vote with our model
+# New data frame:
+
+my_data <- tibble(female = c(0, 0, 1))
+
+predict(glm_obj, newdata = my_data, type = "response")
+
+# Use glm to make a prediction variable in original data frame
+# then see how good the predictions are
+regression %>%
+  mutate(prediction = predict(glm_obj, newdata = regression, type = "response")) %>%
+  group_by(dvote) %>%
+  summarize(prediction_mean = mean(prediction))
 
 ```
 
