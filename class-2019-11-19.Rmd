@@ -1,0 +1,73 @@
+---
+title: "class-2019-11-19"
+author: "Carine Hajjar"
+date: "11/19/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(fs)
+library(tidymodels)
+library(skimr)
+
+```
+
+```{r, download, cache= TRUE}
+download.file("https://github.com/TheUpshot/2018-live-poll-results/archive/master.zip", destfile = "master.zip")
+unzip("master.zip")
+
+az_02 <- read_csv("2018-live-poll-results-master/data/elections-poll-az02-1.csv", 
+                  col_types = cols(
+  .default = col_character(),
+  turnout_scale = col_double(),
+  turnout_score = col_double(),
+  w_LV = col_double(),
+  w_RV = col_double(),
+  final_weight = col_double(),
+  timestamp = col_datetime(format = "")
+))
+
+# using skimr now 
+skim(az_02)
+
+# how do we load a list of all this data in 50 times-- aka all the files??
+
+my_list <- dir_ls("2018-live-poll-results-master/data/")
+# just a list of all the files^ 
+
+# now read in all the data in one data frame 
+file_data <- map_dfr(my_list, ~ read_csv(.x, col_types = cols(
+                                          .default = col_character(),
+                                          turnout_scale = col_double(),
+                                          turnout_score = col_double(),
+                                          w_LV = col_double(),
+                                          w_RV = col_double(),
+                                          final_weight = col_double(),
+                                          timestamp = col_datetime(format = ""))))
+
+file_data
+
+skim(file_data)
+
+# relationship between dvote and female 
+
+regression <- file_data%>%
+  mutate(dvote = ifelse(response == "Dem", 1, 0))%>%
+  mutate(female = ifelse(gender == "Female", 1, 0))%>%
+  select(dvote, female, response, gender)
+
+lm(dvote ~ female, data = regression)
+
+ggplot(regression, aes(x = female, y = dvote))+
+  geom_jitter()+
+  geom_smooth(method = "lm")
+
+
+
+
+
+```
+
